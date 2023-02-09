@@ -1,5 +1,8 @@
 #include "Matrix3x3.h"
 #include <Novice.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 
 Matrix3x3::Matrix3x3() {
 	for (int y = 0; y < column; y++)
@@ -115,6 +118,31 @@ Matrix3x3 Matrix3x3::MakeTranslateMatrix(Vec2 translate) {
 	this->m[2][0] = translate.x;
 	this->m[2][1] = translate.y;
 	return *this;
+}
+
+//	アフィン変換行列の作成関数 (SRT)
+Matrix3x3 Matrix3x3::MakeAffineMatrix(Vec2 scale, float rotate, Vec2 translate)
+{
+	rotate *= M_PI / 180.0f;
+	Matrix3x3 result;
+	//	初期化
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			result.m[y][x] = 0.0f;
+		}
+	}
+	//	代入
+	result.m[0][0] = scale.x * cosf(rotate);
+	result.m[0][1] = scale.x * sinf(rotate);
+	result.m[1][0] = scale.y * -sinf(rotate);
+	result.m[1][1] = scale.y * cosf(rotate);
+	result.m[2][0] = translate.x;
+	result.m[2][1] = translate.y;
+	result.m[2][2] = 1.0f;
+
+	return result;
 }
 
 Vec2 Transform(Vec2 vector, Matrix3x3 matrix) {

@@ -36,6 +36,9 @@ public:
 	
 	//	平行移動行列の作成関数
 	Matrix3x3 MakeTranslateMatrix(Vec2 translate);
+
+	//	アフィン変換
+	Matrix3x3 MakeAffineMatrix(Vec2 scale, float rotate, Vec2 translate);
 };
 
 //	二次元ベクトルを同次座標として変換する

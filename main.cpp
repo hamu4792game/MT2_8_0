@@ -1,42 +1,55 @@
 ﻿#include <Novice.h>
 #include "Matrix3x3.h"
 
-const char* kWindowTitle = "MT2_8_0_確認";
+const char* kWindowTitle = "MT2_13_0_確認";
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
 
 	// ライブラリの初期化
-	int kWindowWidth = 1280, kWindowHeight = 720;
+	int kWindowWidth = 480, kWindowHeight = 960;
 	Novice::Initialize(kWindowTitle, kWindowWidth, kWindowHeight);
 
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	//	player
-	Vec2 playerpos = { 0.0f,0.0f };
-
-	Matrix3x3 cameraWorldMatrix;
-	cameraWorldMatrix.MakeTranslateMatrix({400.0f,400.0f });
-
-	//	ローカル空間上の座標
-	Vec2 leftTopLocal = { -80.0f,80.0f };
-	Vec2 rightTopLocal = { 80.0f,80.0f };
-	Vec2 leftBottomLocal = { -80.0f,-80.0f };
-	Vec2 rightBottomLocal = { 80.0f,-80.0f };
-
 	//	行列の作成
-	Matrix3x3 worldMatrix;
-	Matrix3x3 viewMatrix;
-	viewMatrix.Inverse(cameraWorldMatrix);
+	Matrix3x3 cameraMatrix = cameraMatrix.MakeAffineMatrix({ 1.0f,1.0f }, 0.0f, { 240.0f,480.0f });
 
-	Matrix3x3 orthoMatrix;
-	orthoMatrix.MakeOrthographicMatrix({ -640.0f,360.0f }, { 640.0f,-360.0f });
-	Matrix3x3 viewportMatrix;
-	viewportMatrix.MakeViewportMatrix({ 0.0f,0.0f }, kWindowWidth, kWindowHeight);
-	Matrix3x3 wvpVpMatrix;
+	Matrix3x3 orthoMatrix = orthoMatrix.MakeOrthographicMatrix({ -240.0f,480.0f }, { 240.0f,-480.0f });
 
+	Matrix3x3 viewportMatrix = viewportMatrix.MakeViewportMatrix({ 0.0f,0.0f }, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight));
+
+	Vec2 gravity = { 0.0f,-9.8f };
+
+	struct Ball
+	{
+		Vec2 position;		//	ボールの位置
+		Vec2 velocity;		//	ボールの速度
+		Vec2 acceleration;	//	ボールの加速度
+		float mass;			//	ボールの質量
+		float radius;		//	ボールの半径
+		unsigned int color;	//	ボールの色
+	};
+	Ball ball1{
+		{160.0f,960},
+		{0.0f,0.0f},
+		gravity,
+		1.0f,
+		10.0f,
+		0xffffffff
+	};
+	Ball ball2{
+		{320.0f,960},
+		{0.0f,0.0f},
+		gravity,
+		1.0f,
+		10.0f,
+		0xffffffff
+	};
+
+	
 	int white = Novice::LoadTexture("./white1x1.png");
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -52,31 +65,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		/// ↓更新処理ここから
 		///
 
-		if (keys[DIK_UP])
-		{
-			playerpos.y += 10;
-		}
-		
-		if (keys[DIK_DOWN])
-		{
-			playerpos.y -= 10;
-		}
+		//	メインループでボールの速度に加速度を足す
+		ball1.velocity.y += ball1.acceleration.y;
 
-		if (keys[DIK_LEFT])
-		{
-			playerpos.x -= 10;
-		}
+		//	ボールの位置に速度を足す
+		ball1.position.y += ball1.velocity.y;
 
-		if (keys[DIK_RIGHT])
-		{
-			playerpos.x += 10;
-		}
+		Vec2 airResistance = {
+			0.6f * -ball2.velocity.x,0.6f * -ball2.velocity.y
+		};
 
-		//	平行移動更新
-		worldMatrix.MakeTranslateMatrix(playerpos);
+		Vec2 airResistanceAcceleration = { 0.0f,airResistance.y / ball2.mass };
 
-		//	行列の連携
-		wvpVpMatrix = worldMatrix * viewMatrix * orthoMatrix * viewportMatrix;
+		ball2.acceleration.y = gravity.y + airResistanceAcceleration.y;
+
+		ball2.velocity.y += (ball2.acceleration.y / 60.0f);
+
+		ball2.position.y += (ball2.velocity.y / 60.0f);
 
 		///
 		/// ↑更新処理ここまで
@@ -87,7 +92,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		///
 		
 		//	座標変換
-		Vec2 screenLeftTop = Transform(leftTopLocal, wvpVpMatrix);
+		Vec2 screenPos = Transform(ball1.position, viewportMatrix);
 		Vec2 screenRightTop = Transform(rightTopLocal, wvpVpMatrix);
 		Vec2 screenLeftBottom = Transform(leftBottomLocal, wvpVpMatrix);
 		Vec2 screenRightBottom = Transform(rightBottomLocal, wvpVpMatrix);
@@ -95,6 +100,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		Novice::DrawQuad(screenLeftTop.x, screenLeftTop.y, screenRightTop.x, screenRightTop.y,
 			screenLeftBottom.x, screenLeftBottom.y, screenRightBottom.x, screenRightBottom.y,
 			0, 0, 1, 1, white, 0xffffffff);
+
+		Novice::DrawEllipse()
 
 		///
 		/// ↑描画処理ここまで
