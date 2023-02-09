@@ -17,9 +17,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 	//	行列の作成
 	Matrix3x3 cameraMatrix = cameraMatrix.MakeAffineMatrix({ 1.0f,1.0f }, 0.0f, { 240.0f,480.0f });
 
+	Matrix3x3 viewMatrix = viewMatrix.Inverse(cameraMatrix);
+
 	Matrix3x3 orthoMatrix = orthoMatrix.MakeOrthographicMatrix({ -240.0f,480.0f }, { 240.0f,-480.0f });
 
 	Matrix3x3 viewportMatrix = viewportMatrix.MakeViewportMatrix({ 0.0f,0.0f }, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight));
+
+	Matrix3x3 wvpVpMatrix;
 
 	Vec2 gravity = { 0.0f,-9.8f };
 
@@ -33,14 +37,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		unsigned int color;	//	ボールの色
 	};
 	Ball ball1{
-		{160.0f,960},
-		{0.0f,0.0f},
-		gravity,
-		1.0f,
-		10.0f,
-		0xffffffff
-	};
-	Ball ball2{
 		{320.0f,960},
 		{0.0f,0.0f},
 		gravity,
@@ -48,8 +44,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		10.0f,
 		0xffffffff
 	};
+	Ball ball2{
+		{160.0f,960},
+		{0.0f,0.0f},
+		gravity,
+		1.0f,
+		10.0f,
+		0xffffffff
+	};
 
-	
+	bool flag = false;
+
 	int white = Novice::LoadTexture("./white1x1.png");
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -65,23 +70,36 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		/// ↓更新処理ここから
 		///
 
-		//	メインループでボールの速度に加速度を足す
-		ball1.velocity.y += ball1.acceleration.y;
+		if (keys[DIK_SPACE])
+		{
+			flag = true;
+		}
 
-		//	ボールの位置に速度を足す
-		ball1.position.y += ball1.velocity.y;
+		if (flag)
+		{
+			//	メインループでボールの速度に加速度を足す
+			
+			ball1.velocity.y += (ball1.acceleration.y / 60.0f);
 
-		Vec2 airResistance = {
-			0.6f * -ball2.velocity.x,0.6f * -ball2.velocity.y
-		};
+			ball1.position.y += (ball1.velocity.y / 60.0f);
 
-		Vec2 airResistanceAcceleration = { 0.0f,airResistance.y / ball2.mass };
+			Vec2 airResistance = {
+				0.6f * -ball2.velocity.x,0.6f * -ball2.velocity.y
+			};
 
-		ball2.acceleration.y = gravity.y + airResistanceAcceleration.y;
+			Vec2 airResistanceAcceleration = { 0.0f,airResistance.y / ball2.mass };
 
-		ball2.velocity.y += (ball2.acceleration.y / 60.0f);
+			ball2.acceleration.y = gravity.y + airResistanceAcceleration.y;
 
-		ball2.position.y += (ball2.velocity.y / 60.0f);
+			ball2.velocity.y += (ball2.acceleration.y / 60.0f);
+
+			ball2.position.y += (ball2.velocity.y / 60.0f);
+		}
+
+		
+
+		wvpVpMatrix = viewMatrix * orthoMatrix * viewportMatrix;
+
 
 		///
 		/// ↑更新処理ここまで
@@ -92,16 +110,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		///
 		
 		//	座標変換
-		Vec2 screenPos = Transform(ball1.position, viewportMatrix);
-		Vec2 screenRightTop = Transform(rightTopLocal, wvpVpMatrix);
-		Vec2 screenLeftBottom = Transform(leftBottomLocal, wvpVpMatrix);
-		Vec2 screenRightBottom = Transform(rightBottomLocal, wvpVpMatrix);
+		Vec2 screenPos1 = Transform(ball1.position, wvpVpMatrix);
+		Vec2 screenPos2 = Transform(ball2.position, wvpVpMatrix);
 
-		Novice::DrawQuad(screenLeftTop.x, screenLeftTop.y, screenRightTop.x, screenRightTop.y,
-			screenLeftBottom.x, screenLeftBottom.y, screenRightBottom.x, screenRightBottom.y,
-			0, 0, 1, 1, white, 0xffffffff);
-
-		Novice::DrawEllipse()
+		Novice::DrawEllipse(static_cast<int>(screenPos1.x), static_cast<int>(screenPos1.y),
+			static_cast<int>(ball1.radius), static_cast<int>(ball1.radius), 0.0f, ball1.color, kFillModeSolid);
+		Novice::DrawEllipse(static_cast<int>(screenPos2.x), static_cast<int>(screenPos2.y),
+			static_cast<int>(ball2.radius), static_cast<int>(ball2.radius), 0.0f, ball2.color, kFillModeSolid);
 
 		///
 		/// ↑描画処理ここまで

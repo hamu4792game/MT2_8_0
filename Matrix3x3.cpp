@@ -51,17 +51,36 @@ const Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& mat) {
 }
 
 Matrix3x3 Matrix3x3::MakeOrthographicMatrix(Vec2 lefttop, Vec2 rightbottom) {
+
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			this->m[y][x] = 0.0f;
+		}
+	}
+
 	this->m[0][0] = 2.0f / (rightbottom.x - lefttop.x);
 	this->m[1][1] = 2.0f / (lefttop.y - rightbottom.y);
 	this->m[2][0] = (lefttop.x + rightbottom.x) / (lefttop.x - rightbottom.x);
 	this->m[2][1] = (lefttop.y + rightbottom.y) / (rightbottom.y - lefttop.y);
 	this->m[2][2] = 1.0f;
+
+	
 	
 	return *this;
 }
 
 
 Matrix3x3 Matrix3x3::MakeViewportMatrix(Vec2 lefttop, float width, float height) {
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			this->m[y][x] = 0.0f;
+		}
+	}
+
 	this->m[0][0] = width / 2.0f;
 	this->m[1][1] = -(height / 2.0f);
 	this->m[2][0] = lefttop.x + (width / 2.0f);
