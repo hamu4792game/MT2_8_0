@@ -19,7 +19,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 
 	Matrix3x3 viewMatrix = viewMatrix.Inverse(cameraMatrix);
 
-	Matrix3x3 orthoMatrix = orthoMatrix.MakeOrthographicMatrix({ -240.0f,480.0f }, { 240.0f,-480.0f });
+	Matrix3x3 orthoMatrix = orthoMatrix.MakeOrthographicMatrix({ -640.0f,360.0f }, { 640.0f,-360.0f });
 
 	Matrix3x3 viewportMatrix = viewportMatrix.MakeViewportMatrix({ 0.0f,0.0f }, static_cast<float>(kWindowWidth), static_cast<float>(kWindowHeight));
 
